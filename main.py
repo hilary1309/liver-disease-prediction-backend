@@ -151,15 +151,15 @@ detection = Detection(
 )
 
 # Local db
-client = MongoClient('mongodb://localhost:27017/')
-db = client['testing_db']
-collection = db['testing_collecttion']
+#client = MongoClient('mongodb://localhost:27017/')
+#db = client['testing_db']
+#collection = db['testing_collecttion']
 
 
 # Cloud db with Atlas
-#client = MongoClient('mongodb+srv://aghasilihilary:Hilary139@liverdisease.e0rfdfc.mongodb.net/')
-#db = client['Fatty_liver_db']
-#collection = db['LiverDisease']
+client = MongoClient('mongodb+srv://aghasilihilary:Hilary139@liverdisease.e0rfdfc.mongodb.net/')
+db = client['Fatty_liver_db']
+collection = db['LiverDisease']
 
 
 # upload_image = 'C:\\Users\\Admin\\PycharmProjects\\Docker application\\Docker\\images'
