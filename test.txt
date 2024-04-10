@@ -1,0 +1,222 @@
+async def upload_to_cloudinary(file_contents: bytes) -> dict:
+    try:
+        # Perform synchronous operation to upload image to Cloudinary
+        upload_result = upload(file_contents)
+        # Return the upload result as a dictionary
+        return upload_result
+    except Exception as e:
+        # Handle any exceptions
+        raise HTTPException(status_code=500, detail=f"An error occurred while uploading the image: {str(e)}")
+
+
+
+
+
+def upload_to_cloudinary(file_contents: bytes) -> dict:
+    try:
+        # Perform synchronous operation to upload image to Cloudinary
+        upload_result = upload(file_contents)
+        # Return the upload result as a dictionary
+        return upload_result
+    except Exception as e:
+        # Handle any exceptions
+        raise HTTPException(status_code=500, detail=f"An error occurred while uploading the image: {str(e)}")
+    
+
+
+
+
+
+
+@app.post('/detection')
+async def post_detection(file: UploadFile, request: Request):
+    try:
+        # Generate random id
+        prediction_id = str(ObjectId())
+
+        # Read image bytes from UploadFile
+        image_bytes = await file.read()
+
+        # Process the image as you were doing
+        image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        image = np.array(image)
+        image = image[:, :, ::-1].copy()
+        results = detection(image)
+
+        # Find the index with the highest confidence
+        max_confidence_index = results["confidences"].index(max(results["confidences"]))
+
+        # Get the corresponding class with the same index
+        highest_confidence_class = results["classes"][max_confidence_index]
+
+        # Get the highest confidence score
+        highest_confidence_score = max(results["confidences"])
+
+        # Convert the highest confidence score into the float range of 0 to 1
+        highest_confidence_score_normalized = round(highest_confidence_score, 2)  # Round to 2 decimal places
+
+        # Provides a list of preventions for each model being identified
+        prevention_messages = {
+            #'Blight': ["Blight detected. Prune infected leaves and use fungicide to control spread."],
+            #'Rust': ["Rust identified. Use fungicide and remove infected leaves."],
+            'UnHealthy': [
+                "Fatty Liver Disease spot found. Take Medication, Seek medical care.",
+                "issues detected. Ensure proper care routine."
+            ],
+            'Healthy': [
+                "Liver looks healthy. Maintain current care.",
+                "No issues detected. Keep up care routine."
+            ]
+        }
+        suggestion = []
+
+        for class_name, messages in prevention_messages.items():
+            if highest_confidence_class == class_name:
+                suggestion = messages
+                break
+
+        #filename = f"{str(uuid.uuid4())}.jpg"
+
+        # Create the full path for the image
+        #image_path = os.path.join(upload_image, filename)
+
+        # Save the uploaded bytes as an image file
+        #with open(image_path, "wb") as image_file:
+         #   image_file.write(image_bytes)
+
+        base_url = request.base_url
+        #image_url = f'{base_url}images/{filename}'
+        #print(f"Image URL: {image_url}")
+        # Store the image URL and other relevant data in MongoDB
+
+        # Upload the image file and retrieve the image URL
+        image_url = await upload_image_file(File)
+
+        prediction_data = {
+            "_id": prediction_id,
+            "timestamp": datetime.now(),
+            "prediction": results,
+            "highest_confidence_class": highest_confidence_class,
+            "highest_confidence_score": highest_confidence_score_normalized,
+            "Suggestions": suggestion,
+            "image_url": image_url  # Store the image URL
+        }
+        collection.insert_one(prediction_data)
+
+        del results['boxes']
+
+        return {
+            "_id": prediction_id,
+            "Class Name": highest_confidence_class,
+            "Confidence Score": highest_confidence_score_normalized,
+            "Suggestions": suggestion,
+            "Image URL": image_url  # Return the image URL
+        }
+    except Exception as e:
+        return {"error": f"An error occurred while processing the image: {str(e)}"}
+
+
+#def upload_image_file(image):
+  
+ #   if image == "":
+    #    return "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSwsArWf2lZuLGqco6QoGM13keJb078XIgNWA&usqp=CAU"
+   # else:
+    #   try:
+      #      upload_data = cloudinary.uploader.upload(image)
+      #      return upload_data["url"]
+   #     except:
+      #      traceback.print_exc()
+     #       pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@app.post('/detection')
+async def post_detection(request: Request, file: UploadFile = File(...)):
+    try:
+        # Generate random id
+        prediction_id = str(ObjectId())
+
+        # Read image bytes from UploadFile
+        image_bytes = await file.read()
+
+        # Process the image as you were doing
+        image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        image = np.array(image)
+        image = image[:, :, ::-1].copy()
+        results = detection(image)
+
+        # Find the index with the highest confidence
+        max_confidence_index = results["confidences"].index(max(results["confidences"]))
+
+        # Get the corresponding class with the same index
+        highest_confidence_class = results["classes"][max_confidence_index]
+
+        # Get the highest confidence score
+        highest_confidence_score = max(results["confidences"])
+
+        # Convert the highest confidence score into the float range of 0 to 1
+        highest_confidence_score_normalized = round(highest_confidence_score, 2)  # Round to 2 decimal places
+
+        # Provides a list of preventions for each model being identified
+        prevention_messages = {
+            'UnHealthy': [
+                "Fatty Liver Disease spot found. Take Medication, Seek medical care.",
+                "issues detected. Ensure proper care routine."
+            ],
+            'Healthy': [
+                "Liver looks healthy. Maintain current care.",
+                "No issues detected. Keep up care routine."
+            ]
+        }
+        suggestion = []
+
+        for class_name, messages in prevention_messages.items():
+            if highest_confidence_class == class_name:
+                suggestion = messages
+                break
+
+        # Upload the image file and retrieve the image URL
+        image_url = await upload_image_file(file)
+
+        # Construct prediction data
+        prediction_data = {
+            "_id": prediction_id,
+            "timestamp": datetime.now(),
+            "prediction": results,
+            "highest_confidence_class": highest_confidence_class,
+            "highest_confidence_score": highest_confidence_score_normalized,
+            "Suggestions": suggestion,
+            "image_url": image_url  # Store the image URL
+        }
+
+        # Store prediction data in the database
+        collection.insert_one(prediction_data)
+
+        # Remove 'boxes' key from results before returning
+        del results['boxes']
+
+        # Return response
+        return {
+            "_id": prediction_id,
+            "Class Name": highest_confidence_class,
+            "Confidence Score": highest_confidence_score_normalized,
+            "Suggestions": suggestion,
+            "Image URL": image_url  # Return the image URL
+        }
+
+    except Exception as e:
+        return {"error": f"An error occurred while processing the image: {str(e)}"}
+
