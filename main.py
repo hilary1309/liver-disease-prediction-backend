@@ -163,8 +163,9 @@ collection = db['LiverDisease']
 
 
 # upload_image = 'C:\\Users\\Admin\\PycharmProjects\\Docker application\\Docker\\images'
-upload_image = '/Users/hilaryaghasili/Desktop/Final implement backend/images'
-app.mount("/images", StaticFiles(directory=upload_image), name="images")
+#upload_image = '/Users/hilaryaghasili/Desktop/Final implement backend/images'
+
+#app.mount("/images", StaticFiles(directory=upload_image), name="images")
 
 
 # Set up Cloudinary configuration (replace 'cloud_name', 'api_key', 'api_secret' with your Cloudinary credentials)
@@ -327,19 +328,22 @@ async def delete_prediction(prediction_id: str):
         # prediction = collection.find_one_and_delete({"_id": object_id})
         # print(f"Retrieved Prediction: {prediction}")
 
-        if prediction is not None:
-            # Delete the associated image file
-            image_url = prediction.get("image_url", "")
-            if image_url:
-                image_path = os.path.join(upload_image, image_url.split("/")[-1])
-                print(f"Image Path: {image_path}")  # Debugging: Log the image path
-                if os.path.exists(image_path):
-                    os.remove(image_path)
-                    print(f"Image file deleted: {image_path}")  # Debugging: Log image deletion
 
-            return {"success": True, "message": "Prediction deleted successfully"}
-        else:
-            return {"success": False, "message": "Prediction not found"}
+        #if prediction is not None:
+            # Delete the associated image file
+            #image_url = prediction.get("image_url", "")
+           # if image_url:
+            #    image_path = os.path.join(upload_image, image_url.split("/")[-1])
+            #    print(f"Image Path: {image_path}")  # Debugging: Log the image path
+             #   if os.path.exists(image_path):
+            #        os.remove(image_path)
+             #       print(f"Image file deleted: {image_path}")  # Debugging: Log image deletion
+
+            #return {"success": True, "message": "Prediction deleted successfully"}
+       # else:
+       #     return {"success": False, "message": "Prediction not found"}
+
+       
     except Exception as e:
         return {"error": f"An error occurred while deleting the prediction: {str(e)}"}
 
